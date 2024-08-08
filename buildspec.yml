@@ -10,17 +10,19 @@ phases:
       - echo Building the Docker image...
       - echo Logging in to Docker Hub
       - docker login -u sbpraonalla -p $DOCKER_HUB_TOKEN
-      - echo ${PROJECT_NAME}
+      - echo ${REPO_NAME}
       - >
-        REPO_EXISTS=$(aws ecr describe-repositories --repository-names ${PROJECT_NAME} --region ${AWS_REGION} 2>&1 || echo "not found");
+        REPO_EXISTS=$(aws ecr describe-repositories --repository-names ${REPO_NAME} --region ${AWS_REGION} 2>&1 || echo "not found");
         if [[ $REPO_EXISTS == *"not found"* ]]; then
-          aws ecr create-repository --repository-name ${PROJECT_NAME} --region ${AWS_REGION}
+          aws ecr create-repository --repository-name ${REPO_NAME} --region ${AWS_REGION}
         fi
   build:
     commands:
-      - docker build  --no-cache  .
+      - echo Building the Docker image...
+      - docker build --no-cache --tag=${REPO_NAME}   --file=Dockerfile .
+      
   post_build:
     commands:
       - echo Pushing the Docker image to ECR...
-      - docker tag ${PROJECT_NAME}:latest ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROJECT_NAME}:${TAG_NAME}
-      - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROJECT_NAME}:${TAG_NAME}
+      - docker tag ${REPO_NAME}:latest ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${TAG_NAME}
+      - docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}:${TAG_NAME}
